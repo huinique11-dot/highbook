@@ -1,6 +1,6 @@
 /* 오프라인 지원: 먼저 인터넷에서 받아 오고, 안 되면 저장해 둔 사본을 보여 줍니다.
    저장되는 자료는 암호화된 파일이라 키 없이는 읽을 수 없습니다. */
-const CACHE = "hb-v1";
+const CACHE = "hb-v2";
 const SHELL = ["./", "index.html", "assets/app.js", "assets/lock.js", "manifest.webmanifest", "assets/icons/icon-192.png", "assets/icons/icon-512.png", "secure/meta.json", "secure/data.enc"];
 
 self.addEventListener("install", e => {

@@ -287,6 +287,27 @@
         <p class="hint">먼저 시행한 전형에 합격하면 이후 전형에 응시할 수 없어요. 자세한 내용은 <a href="#page-20">파노라마 20쪽</a>과 <a href="#page-2">2쪽</a>을 확인하세요.</p>
       </div>
       <div class="panel">
+        <div class="card-top"><div class="card-main"><h2 style="margin-top:0">지원 규칙 한눈에 보기</h2></div>${starBtn({ id: "rules", type: "안내", title: "고입 지원 규칙", sub: "특성화고·일반고 지원 순서", href: "#schedule" })}</div>
+        <ul style="margin:0 0 10px;padding-left:1.2em;font-size:.92rem">
+          <li>마이스터고·특성화고는 <b>전기고</b>이고, 전기고는 한 번에 <b>1개 학교만</b> 지원할 수 있어요.</li>
+          <li>먼저 치른 전형에 <b>합격하면</b> 그 뒤의 전형에는 지원할 수 없어요. <b>불합격하면</b> 다음 전형에 지원할 수 있어요.</li>
+          <li>전형 일정이 나뉘어 있어서, 떨어지면 다음 단계에서 다른 학교에 다시 도전할 수 있어요.</li>
+        </ul>
+        <ol class="timeline" style="counter-reset:none">
+          <li><span class="when">10월</span><span><b>마이스터고</b> 1곳 (불합격 시 특성화고 지원 가능)</span></li>
+          <li><span class="when">11.23 원서</span><span><b>특성화고 특별전형</b> 1곳 · 발표 11.27</span></li>
+          <li><span class="when">11.30 원서</span><span><b>특성화고 일반전형</b> 1곳 (특별전형과 다른 학교도 가능) · 발표 12.2</span></li>
+          <li><span class="when">12.7~12.11</span><span><b>평준화지역 일반고</b> (예술·IB중점과정은 1지망 앞 0지망으로 1곳 지원)</span></li>
+          <li><span class="when">1.11 원서</span><span><b>추가모집</b>: 전·후기 어디에도 합격하지 못한 학생만 1개 학교 지원</span></li>
+        </ol>
+        <ul style="margin:10px 0 0;padding-left:1.2em;font-size:.88rem;color:var(--sub)">
+          <li>한 학교 안에서 2지망 학과를 쓸 수 있는지, 통합 모집인지는 학교마다 달라요. 학교별 입학전형 요강을 확인하세요.</li>
+          <li>외고·국제고·자사고에 지원했다가 불합격하면 일반고 2지망부터 배정되어 예술·IB중점과정(0지망)에는 지원할 수 없어요.</li>
+          <li>예술·IB중점과정은 희망자가 많으면 일반고 배정 방식으로 정해져 배정이 보장되지 않아요.</li>
+        </ul>
+        <p class="hint">출처: 2027 고입 파노라마 2·13·20쪽, 2027학년도 고입 진학자료 안내(학부모용). 원서 접수 전 교육청 「입학전형 실시계획」으로 꼭 확인하세요.</p>
+      </div>
+      <div class="panel">
         <h2 style="margin-top:0">출석 점수 계산 (21점 만점)</h2>
         <p class="sub" style="margin-top:0">커트라인 사례의 "출결21", "출결10" 같은 표기가 이 점수예요. 1~3학년 전체 <b>미인정</b> 기록으로 계산해요.</p>
         <div class="grid">
