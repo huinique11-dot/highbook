@@ -61,7 +61,7 @@
   const quota = d => d.total ? `${d.cls}학급 · ${d.total}명 (특별 ${d.sp ?? "-"} / 일반 ${d.gen ?? "-"})` : "통합 모집";
 
   // ---------- 라우팅 ----------
-  const routes = { schools: renderSchools, find: renderFind, book: renderBook, schedule: renderSchedule, marks: renderMarks, chat: renderChat };
+  const routes = { schools: renderSchools, find: renderFind, book: renderBook, schedule: renderSchedule, marks: renderMarks };
   function route() {
     const q = $("#q").value.trim();
     if (q) { renderSearch(q); setTab(null); return; }
@@ -378,7 +378,7 @@
     const total = sch.length + cuts.length + pages.length;
     view.innerHTML = `<div class="panel"><div class="card-top"><div class="card-main"><h2 style="margin:0">"${esc(q)}" 검색 결과 ${total}건</h2>
       <div class="meta">학교·학과 ${sch.length} · 커트라인 ${cuts.length} · 파노라마 ${pages.length}쪽</div></div>${starBtn(item)}</div>
-      <p class="hint">띄어쓰기로 여러 단어를 넣으면 모두 포함한 결과만 보여요. 원하는 결과가 없으면 <a href="#chat">AI 상담</a>에 물어보세요.</p></div>
+      <p class="hint">띄어쓰기로 여러 단어를 넣으면 모두 포함한 결과만 보여요. 원하는 결과가 없으면 비슷한 다른 단어로 찾아보세요.</p></div>
       ${sch.length ? `<h3 class="group-h">학교·학과</h3><div class="list">${sch.map(({ s, ds, sel }) => `<a class="card" href="#school-${esc(s.id)}">
         <div class="badges"><span class="b b-kind">${esc(s.kind)}</span>${genderBadge(s.gender)}</div>
         <div class="title">${hl(displaySchool(s), toks)}</div>
@@ -391,126 +391,11 @@
         <div class="title" style="font-size:.98rem">${s ? `<a href="#school-${esc(s.id)}" style="color:inherit">${hl(r.school.replace("(협약형)", "") + " " + r.dept, toks)}</a>` : hl(r.school + " " + r.dept, toks)}</div>
         <div class="trend">${YEARS.map(y => `<span>${y.slice(2)} 특 <b>${cutText(r.years[y], "special")}</b> · 일 <b>${cutText(r.years[y], "general")}</b></span>`).join("")}</div>
         ${YEARS.map(y => r.years[y].note && toks.some(k => r.years[y].note.toLowerCase().includes(k)) ? `<div class="snip"><b>${y}</b> ${hl(r.years[y].note.replace(/\n/g, " / "), toks)}</div>` : "").join("")}</div>`; }).join("")}</div>` : ""}
-      ${total ? "" : `<div class="empty">"${esc(q)}"와 일치하는 내용이 없어요. 다른 단어로 찾아보거나 <a href="#chat">AI 상담</a>을 이용해 보세요.</div>`}`;
+      ${total ? "" : `<div class="empty">"${esc(q)}"와 일치하는 내용이 없어요. 다른 단어로 찾아보거나 <a href="#book">파노라마 전체보기</a>에서 직접 찾아보세요.</div>`}`;
   }
   let qTimer;
   $("#q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(route, 150); });
   $("#q").addEventListener("keydown", e => { if (e.key === "Escape") { e.target.value = ""; route(); } });
-
-  // ---------- AI 상담 (Gemini) ----------
-  const KEY = "hb.gemini.key", MODEL = "hb.gemini.model";
-  let chat = [];
-  const inArtifact = /claude\.ai|claudeusercontent/.test(location.hostname);
-  function buildChunks() {
-    const chunks = [];
-    const cutLine = r => `${r.school} ${r.dept}(${r.type}) 커트라인 ` + YEARS.map(y => `${y} 특별 ${cutText(r.years[y], "special")} 일반 ${cutText(r.years[y], "general")}` + (r.years[y].note ? ` [사례: ${r.years[y].note.replace(/\n/g, "; ")}]` : "")).join(" / ");
-    PANO.schools.forEach(s => {
-      const t = [`[학교] ${s.name} — ${s.kind}, ${s.gender === "공학" ? "남녀공학" : s.gender + "학생만"}, ${s.field}계열, 위치 인천 ${s.loc} (파노라마 ${s.page}쪽)`, `특별전형 선발방법: ${s.selection}`,
-        ...s.depts.map(d => `학과 ${d.name}: ${quota(d)}. ${d.note || ""} ${d.intro} 자격증: ${d.cert}. 취업: ${d.job}. 진학: ${d.univ}`), ...cutRowsFor(s).map(cutLine)].join("\n");
-      chunks.push({ src: `${s.short} (파노라마 ${s.page}쪽)`, text: t });
-    });
-    PANO.pages.filter(p => !(p.page >= 7 && p.page <= 12)).forEach(p => {
-      const t = p.text; for (let i = 0; i < t.length; i += 1400) chunks.push({ src: `파노라마 ${p.page}쪽 ${p.title}`, text: `[파노라마 ${p.page}쪽: ${p.title}]\n` + t.slice(i, i + 1500), page: p.page });
-    });
-    chunks.push({ src: "입학전형 일정", always: true, text: "[2027학년도 입학전형 일정]\n" + SCHED.map(r => `${r[0]}: 원서접수 ${r[1]}, 입학전형 ${r[2]}, 합격자발표 ${r[3]}`).join("\n") +
-      "\n중학교 석차연명부 작성 기준일 2026-11-17. 평준화지역 일반고(후기고, 예술·IB중점과정 포함) 원서접수 2026-12-07~12-11, 배정예정자 발표 2027-01-06, 배정학교 발표 2027-01-15. 외고·국제고·자사고 원서접수 2026-12-04~12-11. 특수지 일반고 특별전형 원서 12-07, 일반전형 원서 12-10, 발표 12-14. 전·후기고 추가모집 2027-01-11~01-13. 마이스터고·특성화고는 전기고이며 전기고는 1개 학교만 지원할 수 있다. 먼저 시행한 고입전형에 합격한 자는 그 이후의 고입전형에 응시할 수 없으며, 전·후기 학교 모집에 합격한 사실이 없는 자에 한해 추가모집 1개 학교에 지원할 수 있다." });
-    chunks.push({ src: "출결·성적 산출", always: true, text: "[고입 성적 산출 300점] 교과 240(1·2학년 80, 3학년 120, 기본 40), 출석 21, 행동발달 9, 자율·동아리·진로 15, 봉사 15. 출석: 미인정 지각·조퇴·결과 3회=결석1일, 미인정결석 2일마다 1점 감점(1~2일 20점 … 21일 이상 10점). 석차백분율은 숫자가 작을수록 상위권이며 커트라인은 그 해 합격한 가장 낮은 성적(가장 큰 %)이다. '미달'은 지원자 전원 합격." });
-    CUT.filter(r => !schoolForCut(r)).forEach(r => chunks.push({ src: "커트라인", text: cutLine(r) }));
-    return chunks;
-  }
-  let CHUNKS = null;
-  const grams = s => { const t = s.replace(/\s+/g, ""); const g = new Set(); for (let i = 0; i < t.length - 1; i++) g.add(t.slice(i, i + 2)); return g; };
-  function retrieve(q, history) {
-    CHUNKS = CHUNKS || buildChunks();
-    const qq = (history.slice(-2).map(m => m.text).join(" ") + " " + q);
-    const qg = grams(qq);
-    const scored = CHUNKS.map(c => {
-      let sc = 0; const cg = c.text.replace(/\s+/g, "");
-      qg.forEach(g => { if (cg.includes(g)) sc++; });
-      PANO.schools.forEach(s => { const nm = s.short.replace(/고$/, ""); if (qq.includes(nm) && c.text.includes(s.short)) sc += 40; });
-      return { c, sc: sc / Math.sqrt(1 + c.text.length / 800) };
-    }).sort((a, b) => b.sc - a.sc);
-    const picked = CHUNKS.filter(c => c.always || c.page === 2 || c.page === 20);
-    let size = picked.reduce((n, c) => n + c.text.length, 0);
-    for (const { c } of scored) { if (picked.includes(c)) continue; if (size + c.text.length > 26000) break; picked.push(c); size += c.text.length; }
-    return picked;
-  }
-  const SYS = `당신은 인천 지역 중학교 3학년 학생과 학부모를 돕는 고입 진학 상담 도우미입니다.
-규칙:
-1. 반드시 아래 [자료]에 있는 내용만 근거로 답하세요. 자료에 없는 내용은 추측하지 말고 "자료에서 확인되지 않는다"고 말한 뒤 학교나 교육청에 확인하라고 안내하세요.
-2. 전형 일정(전기고/후기고 순서, 합격 시 이후 전형 응시 제한, 추가모집)과 지난 커트라인(석차백분율은 숫자가 작을수록 상위권, 커트라인보다 내 %가 작거나 같으면 가능권)을 함께 고려해 단계별로 설명하세요.
-3. 근거가 된 자료(예: 파노라마 2쪽, 인천금융고 커트라인)를 답 끝에 짧게 밝히세요.
-4. 커트라인은 비공식 사례 자료이며 해마다 달라지므로 합격을 단정하지 마세요.
-5. 이름, 학교명, 연락처 같은 개인정보를 묻거나 요구하지 마세요.
-6. 한국어로, 중학생이 이해하기 쉽게, 짧은 문단과 목록으로 답하세요.
-7. 마지막 줄에 "※ 참고용 답변이며, 최종 결정과 책임은 본인에게 있습니다."를 붙이세요.
-오늘 날짜: ${new Date().toISOString().slice(0, 10)}`;
-  function md(t) {
-    const lines = esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").split(/\n/);
-    let html = "", inList = false;
-    lines.forEach(l => {
-      const m = l.match(/^\s*(?:[-*•]|\d+\.)\s+(.*)/);
-      if (m) { if (!inList) { html += "<ul>"; inList = true; } html += `<li>${m[1]}</li>`; return; }
-      if (inList) { html += "</ul>"; inList = false; }
-      if (l.trim()) html += `<p>${l.replace(/^#+\s*/, "")}</p>`;
-    });
-    return html + (inList ? "</ul>" : "");
-  }
-  function renderChat() {
-    const key = store.get(KEY, ""), model = store.get(MODEL, "gemini-2.5-flash");
-    view.innerHTML = `
-      <div class="panel"><h2 style="margin-top:0">AI 진학 상담 (Gemini)</h2>
-        <p class="sub" style="margin-top:0">파노라마 전체 내용, 지난 커트라인, 전형 일정을 근거로 답해요. 예: "인천금융고 웹툰애니메이션과 실기전형에 떨어지면 인천예일고 미술중점에 지원할 수 있나요?"</p>
-        ${inArtifact ? `<div class="notice">이 미리보기 화면에서는 외부 AI 연결이 막혀 있어요. GitHub 주소로 접속하면 AI 상담을 쓸 수 있어요.</div>` : ""}
-        <details ${key ? "" : "open"}><summary>${key ? "Gemini 연결됨 · 설정 바꾸기" : "① 내 구글 계정으로 Gemini 연결하기"}</summary>
-          <ol style="font-size:.9rem;padding-left:1.2em;margin:8px 0">
-            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>에 <b>본인 구글 계정으로 로그인</b>하세요.</li>
-            <li>"API 키 만들기(Create API key)"를 눌러 무료 키를 복사하세요.</li>
-            <li>아래 칸에 붙여넣고 저장하면 끝이에요.</li></ol>
-          <div class="grid2"><div class="field"><label for="gKey">Gemini API 키</label><input id="gKey" type="password" autocomplete="off" placeholder="AIza로 시작하는 키" value="${esc(key)}"></div>
-            <div class="field"><label for="gModel">모델</label><input id="gModel" list="gModels" value="${esc(model)}"><datalist id="gModels"><option value="gemini-2.5-flash"><option value="gemini-2.5-pro"><option value="gemini-flash-latest"></datalist></div></div>
-          <div class="row" style="margin-top:10px"><button class="btn" id="gSave" type="button">저장</button><button class="btn ghost" id="gForget" type="button">키 지우기</button></div>
-          <p class="hint">키는 <b>이 기기 브라우저에만</b> 저장돼요. 질문과 관련 자료는 본인 계정의 Google Gemini로 직접 전송되며, 이 앱 운영자에게는 아무것도 전송되지 않아요. 공용 컴퓨터에서는 사용 후 "키 지우기"를 누르세요.</p>
-        </details>
-      </div>
-      <div class="notice">질문에 <b>이름, 학교명, 반, 연락처 등 개인정보를 쓰지 마세요.</b> AI 답변은 틀릴 수 있으니 중요한 내용은 원문 자료와 선생님께 꼭 확인하세요.</div>
-      <div class="chatlog" id="log" aria-live="polite">${chat.map(m => `<div class="msg ${m.role === "user" ? "me" : "bot"}">${m.role === "user" ? esc(m.text) : md(m.text) + (m.src ? `<div class="src">참고: ${esc(m.src)}</div>` : "")}</div>`).join("") || `<div class="msg bot"><p>안녕하세요! 고입 진학에 대해 궁금한 점을 물어보세요.</p><p class="meta">예) 내신 70%인 여학생이 지원할 만한 디자인 학과는?<br>예) 특성화고 특별전형에 떨어지면 일반전형에 다시 지원할 수 있나요?</p></div>`}</div>
-      <form class="composer" id="ask"><textarea id="askIn" rows="2" placeholder="질문을 입력하세요" ${key ? "" : "disabled"}></textarea><button class="btn" type="submit" id="askBtn" ${key ? "" : "disabled"}>보내기</button></form>
-      ${chat.length ? `<p class="hint"><a href="#" id="clearChat">대화 지우기</a> · 대화 내용은 저장되지 않아 새로고침하면 사라져요.</p>` : `<p class="hint">대화 내용은 저장되지 않아 새로고침하면 사라져요.</p>`}`;
-    $("#gSave").addEventListener("click", () => { store.set(KEY, $("#gKey").value.trim()); store.set(MODEL, $("#gModel").value.trim() || "gemini-2.5-flash"); toast("저장했어요"); renderChat(); });
-    $("#gForget").addEventListener("click", () => { store.del(KEY); toast("키를 지웠어요"); renderChat(); });
-    const cl = $("#clearChat"); if (cl) cl.addEventListener("click", e => { e.preventDefault(); chat = []; renderChat(); });
-    $("#ask").addEventListener("submit", e => { e.preventDefault(); ask(); });
-    $("#askIn").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(); } });
-    const log = $("#log"); log.lastElementChild && log.lastElementChild.scrollIntoView({ block: "nearest" });
-  }
-  async function ask() {
-    const q = $("#askIn").value.trim(); if (!q) return;
-    const key = store.get(KEY, ""), model = store.get(MODEL, "gemini-2.5-flash");
-    if (!key) { toast("먼저 Gemini 키를 저장하세요"); return; }
-    const ctx = retrieve(q, chat);
-    chat.push({ role: "user", text: q }); renderChat();
-    const log = $("#log"); const wait = document.createElement("div"); wait.className = "msg bot"; wait.textContent = "자료를 찾아 답을 쓰는 중…"; log.appendChild(wait); wait.scrollIntoView({ block: "nearest" });
-    $("#askBtn").disabled = true;
-    const contents = chat.slice(-8).map(m => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] }));
-    contents[contents.length - 1].parts[0].text = `[자료]\n${ctx.map(c => c.text).join("\n\n")}\n\n[질문]\n${q}`;
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: SYS }] }, contents, generationConfig: { temperature: 0.3 } }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data.error && data.error.message) || ("HTTP " + res.status));
-      const text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || []).map(p => p.text || "").join("").trim();
-      chat.push({ role: "model", text: text || "답변을 받지 못했어요. 질문을 바꿔서 다시 시도해 주세요.", src: [...new Set(ctx.filter(c => !c.always).slice(0, 6).map(c => c.src))].join(", ") });
-    } catch (err) {
-      const m = String(err.message || err);
-      const hint = /API key|API_KEY|permission|403|400/i.test(m) ? "키가 올바른지 확인해 주세요." : /quota|429/i.test(m) ? "무료 사용량을 넘었어요. 잠시 후 다시 시도하세요." : /fetch|network/i.test(m) ? "인터넷 연결을 확인해 주세요." : "";
-      chat.push({ role: "model", text: `연결에 실패했어요. ${hint}\n(${m})`, err: true });
-    }
-    renderChat();
-    const ta = $("#askIn"); ta && ta.focus();
-  }
 
   // ---------- 시작 ----------
   if (location.hash.startsWith("#q=")) { $("#q").value = decodeURIComponent(location.hash.slice(3)); history.replaceState(null, "", "#schools"); }
