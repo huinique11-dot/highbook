@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>인천 고입 길잡이</title>
+<meta name="description" content="2027 인천 고입 파노라마 전체 내용, 특성화고·마이스터고 학과 정보와 2022~2025 커트라인, 전형 일정, 책갈피, AI 상담을 한곳에서 봅니다.">
+<style>
+/* 레이아웃: 상단 고정 검색 + 가로 스크롤 탭, 한 열 카드 흐름 (폰 우선) */
+:root{
+  --bg:#f5f6fa; --surface:#fff; --surface-2:#eef1f6; --line:#dfe3ec;
+  --text:#172033; --sub:#56627a; --muted:#8792a8;
+  --accent:#2f5bea; --accent-soft:#e8eeff; --on-accent:#fff;
+  --male:#2563eb; --male-bg:#e9f0ff; --female:#cf355a; --female-bg:#fdebf0; --coed:#128a55; --coed-bg:#e6f5ed;
+  --safe:#128a55; --safe-bg:#e6f5ed; --fit:#2f5bea; --fit-bg:#e8eeff; --reach:#b87400; --reach-bg:#fff3d9; --try:#b22f48; --try-bg:#fdebf0;
+  --mark:#ffe58a; --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1219; --surface:#161b24; --surface-2:#1d2330; --line:#29303f;
+  --text:#e7ebf2; --sub:#a3acbc; --muted:#747e91;
+  --accent:#7f9cff; --accent-soft:#1e2948; --on-accent:#0e1219;
+  --male:#88aaff; --male-bg:#1b2746; --female:#ff8fa6; --female-bg:#381b24; --coed:#60d39b; --coed-bg:#163125;
+  --safe:#60d39b; --safe-bg:#163125; --fit:#88aaff; --fit-bg:#1b2746; --reach:#ffc65f; --reach-bg:#382c11; --try:#ff8fa6; --try-bg:#381b24;
+  --mark:#6b5a12; --shadow:none; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1219; --surface:#161b24; --surface-2:#1d2330; --line:#29303f;
+  --text:#e7ebf2; --sub:#a3acbc; --muted:#747e91;
+  --accent:#7f9cff; --accent-soft:#1e2948; --on-accent:#0e1219;
+  --male:#88aaff; --male-bg:#1b2746; --female:#ff8fa6; --female-bg:#381b24; --coed:#60d39b; --coed-bg:#163125;
+  --safe:#60d39b; --safe-bg:#163125; --fit:#88aaff; --fit-bg:#1b2746; --reach:#ffc65f; --reach-bg:#382c11; --try:#ff8fa6; --try-bg:#381b24;
+  --mark:#6b5a12; --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.55;word-break:keep-all;overflow-wrap:anywhere}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+a{color:var(--accent)}
+.wrap{max-width:880px;margin:0 auto;padding-block:0 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-top:12px}
+.brand{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.brand h1{font-size:1.2rem;margin:0;letter-spacing:-.02em;text-wrap:balance}
+.brand small{display:block;color:var(--muted);font-weight:500;font-size:.75rem}
+.icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--sub);border-radius:999px;min-width:38px;height:38px;font:inherit;font-size:.85rem;cursor:pointer;padding:0 10px}
+.searchbar{display:flex;gap:8px;margin-top:10px}
+.searchbar input{flex:1;min-width:0}
+nav.tabs{display:flex;gap:6px;padding:10px 0;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--sub);padding:8px 13px;border-radius:999px;font:inherit;font-size:.9rem;font-weight:700;cursor:pointer;text-decoration:none}
+.tab[aria-current="page"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input,select,textarea{width:100%;font:inherit;font-size:1rem;color:var(--text);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{resize:vertical;min-height:44px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px;min-width:0}
+h2{font-size:1.1rem;margin:6px 0 10px;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:1rem;margin:0 0 8px}
+.hint{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.grid2{grid-template-columns:1fr}}
+.field label{display:block;font-size:.78rem;font-weight:700;color:var(--sub);margin-bottom:6px}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{flex:1;border:0;background:transparent;color:var(--sub);font:inherit;font-weight:700;padding:9px 6px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--sub);border-radius:999px;padding:5px 11px;font:inherit;font-size:.82rem;font-weight:600;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row .grow{flex:1;min-width:170px}
+.check{display:flex;gap:6px;align-items:center;font-size:.88rem;color:var(--sub);cursor:pointer}
+.check input{width:auto}
+.btn{border:0;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:700;border-radius:10px;padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:var(--surface-2);color:var(--text)}
+.btn:disabled{opacity:.5;cursor:default}
+.list{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-width:0}
+a.card{display:block;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--accent)}
+.card-top{display:flex;gap:12px;align-items:flex-start}
+.card-main{flex:1;min-width:0}
+.badges{display:flex;gap:5px;margin-bottom:4px;flex-wrap:wrap}
+.b{font-size:.72rem;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap}
+.t-남{color:var(--male);background:var(--male-bg)} .t-여{color:var(--female);background:var(--female-bg)} .t-공학{color:var(--coed);background:var(--coed-bg)}
+.b-kind{color:var(--sub);background:var(--surface-2)}
+.title{font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
+.sub{color:var(--sub);font-size:.9rem}
+.meta{color:var(--muted);font-size:.82rem}
+.star{border:0;background:transparent;font-size:1.35rem;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px}
+.star[aria-pressed="true"]{color:#e0a800}
+.kv{display:grid;grid-template-columns:72px minmax(0,1fr);gap:4px 10px;font-size:.88rem;margin-top:8px}
+.kv dt{color:var(--muted);font-weight:700}
+.kv dd{margin:0}
+.box{white-space:pre-line;font-size:.88rem;background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.cut{text-align:right;flex:0 0 auto}
+.cut .v{font-size:1.45rem;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.cut .u{font-size:.74rem;color:var(--muted)}
+.cut .m{font-size:.78rem;font-weight:700}
+.trend{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.trend span{font-size:.74rem;background:var(--surface-2);color:var(--sub);padding:3px 7px;border-radius:6px;font-variant-numeric:tabular-nums}
+.trend span b{color:var(--text)}
+details{margin-top:8px}
+summary{cursor:pointer;font-size:.84rem;color:var(--accent);font-weight:700}
+.notes{font-size:.83rem;color:var(--sub);margin:6px 0 0;padding:8px 10px;background:var(--surface-2);border-radius:8px;white-space:pre-line}
+.notes b{color:var(--text)}
+.summary{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}
+.pill{font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.p-safe{color:var(--safe);background:var(--safe-bg)} .p-fit{color:var(--fit);background:var(--fit-bg)}
+.p-reach{color:var(--reach);background:var(--reach-bg)} .p-try{color:var(--try);background:var(--try-bg)}
+.group-h{font-size:.98rem;margin:18px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.group-h small{color:var(--muted);font-weight:500;font-size:.78rem}
+.empty{text-align:center;color:var(--sub);padding:34px 16px;border:2px dashed var(--line);border-radius:14px}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:.74rem;color:var(--muted);font-weight:700;white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+.snip{font-size:.85rem;color:var(--sub);margin-top:6px}
+.pageimg{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);background:#fff;display:block}
+.pager{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:10px}
+.toc a{display:flex;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none;align-items:baseline}
+.toc a b{color:var(--accent);font-variant-numeric:tabular-nums;min-width:30px}
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.timeline .when{flex:0 0 96px;font-weight:800;color:var(--accent);font-size:.86rem}
+.stat{flex:1;min-width:120px;background:var(--surface-2);border-radius:12px;padding:12px}
+.stat .k{font-size:.78rem;color:var(--sub);font-weight:600}
+.stat .v{font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums}
+.links a{display:block;padding:10px 0;border-bottom:1px solid var(--line);font-weight:600;text-decoration:none}
+.links a small{display:block;color:var(--muted);font-weight:500}
+.chatlog{display:flex;flex-direction:column;gap:10px;margin:10px 0}
+.msg{max-width:92%;padding:10px 12px;border-radius:14px;font-size:.92rem}
+.msg p{margin:0 0 6px} .msg p:last-child{margin:0} .msg ul{margin:4px 0;padding-left:1.2em}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px;white-space:pre-line}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.err{border-color:var(--try);color:var(--try)}
+.msg .src{font-size:.75rem;color:var(--muted);margin-top:6px}
+.composer{display:flex;gap:8px;align-items:flex-end}
+.composer textarea{flex:1;min-width:0}
+.notice{font-size:.84rem;background:var(--reach-bg);color:var(--text);border-radius:10px;padding:10px 12px}
+footer.disclaimer{margin-top:24px;padding:14px;border:1px solid var(--line);font-size:.82rem;color:var(--sub);background:var(--surface);border-radius:12px}
+footer.disclaimer b{color:var(--text)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 14px;border-radius:999px;font-size:.86rem;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.locked .searchbar,.locked nav.tabs,.locked #lockBtn{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:480px){.cut .v{font-size:1.2rem}.timeline .when{flex-basis:82px}.brand h1{font-size:1.08rem}}
+</style>
+</head>
+<body class="locked">
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <h1>인천 고입 길잡이<small>2027 고입 파노라마 · 특성화고 커트라인</small></h1>
+      <div class="row" style="gap:6px;flex-wrap:nowrap"><button class="icon-btn" id="lockBtn" type="button" aria-label="잠그기" title="잠그기">🔒</button><button class="icon-btn" id="themeBtn" type="button" aria-label="화면 밝기 전환">🌓</button></div>
+    </div>
+    <div class="searchbar">
+      <input id="q" type="search" placeholder="키워드 검색 (예: 웹툰, 미술중점, 반도체, 출결)" aria-label="전체 검색" autocomplete="off">
+    </div>
+    <nav class="tabs" aria-label="메뉴">
+      <a class="tab" href="#schools" data-tab="schools">학교·학과</a>
+      <a class="tab" href="#find" data-tab="find">합격권 찾기</a>
+      <a class="tab" href="#book" data-tab="book">파노라마 전체보기</a>
+      <a class="tab" href="#schedule" data-tab="schedule">일정·출결</a>
+      <a class="tab" href="#marks" data-tab="marks">★ 책갈피</a>
+      <a class="tab" href="#chat" data-tab="chat">AI 상담</a>
+    </nav>
+  </div>
+
+  <main id="view"></main>
+
+  <footer class="disclaimer" id="disclaimer">
+    <b>※ 이 앱의 모든 정보는 참고자료일 뿐이며, 이를 바탕으로 한 진학 결정과 그 결과에 대한 책임은 본인에게 있습니다.</b>
+    정확한 내용은 각 학교 입학전형 요강과 인천광역시교육청 공고를 반드시 확인하세요.
+    커트라인은 선생님들이 공유한 합격·불합격 사례를 모은 비공식 자료이고, AI 상담 답변은 틀릴 수 있습니다.
+    <div class="meta" style="margin-top:6px">자료: 2027 고입 파노라마(인천광역시교육청 진로진학지원단 마중물), 2027학년도 인천광역시 고등학교 입학전형 실시계획, 특성화고·마이스터고 커트라인 공유 자료(2026.9.11 기준)</div>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/lock.js"></script>
+</body>
+</html>
