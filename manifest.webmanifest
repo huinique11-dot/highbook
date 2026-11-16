@@ -1,0 +1,17 @@
+{
+  "name": "인천 고입 길잡이",
+  "short_name": "고입 길잡이",
+  "description": "2027 인천 고입 파노라마, 특성화고·마이스터고 학과 정보와 커트라인, 전형 일정을 한곳에서 봅니다.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F368A1",
+  "theme_color": "#D6336F",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
