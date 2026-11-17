@@ -134,7 +134,7 @@
       </div>${starBtn(item)}</div></div>
       <div class="panel"><h3>2027학년도 특별전형 선발 방법</h3><div class="box">${esc(s.selection)}</div></div>
       <div class="panel"><h3>학과 지망 방식${s.choice ? ` <span class="pill p-reach" style="font-size:.74rem">${esc(s.choice.type)}</span>` : ""}</h3>
-        ${s.choice ? `<p style="margin:0;font-size:.92rem">${esc(s.choice.text)}</p><p class="hint">근거: ${esc(s.choice.src)}</p>`
+        ${s.choice ? `<p style="margin:0;font-size:.92rem;white-space:pre-line">${esc(s.choice.text)}</p><p class="hint">근거: ${esc(s.choice.src)}</p>`
           : `<p style="margin:0;font-size:.92rem">이 학교의 학과 지망 방식(몇 지망까지 쓰는지, 떨어지면 다른 학과로 배정되는지)은 가진 자료에서 확인되지 않았어요.</p>`}
         <p class="hint">학교마다 1지망만 쓰는 곳, 모든 학과를 순서대로 다 적어야 하는 곳, 통합 모집하는 곳이 있어요. 원서 쓰기 전에 2027학년도 학교 입학전형 요강으로 꼭 확인하세요.</p></div>
       ${s.features && s.features.length ? `<div class="panel"><h3>특색 있는 교육활동</h3><ul style="margin:0;padding-left:1.2em;font-size:.9rem">${s.features.map(f => `<li>${esc(f)}</li>`).join("")}</ul><p class="hint">출처: Dream &amp; Vision 2027 ${s.dv}쪽 (학교 제공 내용)</p></div>` : ""}
