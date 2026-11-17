@@ -18,17 +18,25 @@
     return crypto.subtle.deriveKey({ name: "PBKDF2", hash: "SHA-256", salt: hexToBytes(meta.salt), iterations: meta.iter }, base, { name: "AES-GCM", length: 256 }, true, ["decrypt"]);
   }
   const hexToBytes = h => new Uint8Array(h.match(/../g).map(x => parseInt(x, 16)));
-  async function open(path) {
-    const res = await fetch(path, { cache: "no-cache" });
+  // 배포 번호(build)를 주소에 붙여, 예전 배포의 파일이 캐시에서 섞여 나오지 않게 함
+  const ver = () => (meta && meta.build ? "?v=" + meta.build : "");
+  async function open(path, mode) {
+    const res = await fetch(path + ver(), { cache: mode || "no-cache" });
     if (!res.ok) throw new Error("파일을 불러오지 못했어요 (" + res.status + ")");
     const buf = new Uint8Array(await res.arrayBuffer());
     return crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.slice(0, 12) }, KEY, buf.slice(12));
   }
 
-  // 원문 이미지: 필요할 때 풀어서 이 기기 메모리에서만 보여 줌
+  // 원문 이미지: 필요할 때 풀어서 이 기기 메모리에서만 보여 줌.
+  // 실패하면 캐시를 건너뛰고 한 번 더 받아 보고, 그래도 안 되면 다음에 다시 시도할 수 있게 기억하지 않음
   window.HB_IMG = function (n, book) {
     const nn = String(n).padStart(2, "0"), path = book === "dv" ? `secure/dv/d-${nn}.enc` : `secure/img/p-${nn}.enc`;
-    if (!imgCache.has(path)) imgCache.set(path, open(path).then(b => URL.createObjectURL(new Blob([b], { type: "image/jpeg" }))));
+    if (!imgCache.has(path)) {
+      const p = open(path).catch(() => open(path, "reload"))
+        .then(b => URL.createObjectURL(new Blob([b], { type: "image/jpeg" })))
+        .catch(err => { imgCache.delete(path); throw err; });
+      imgCache.set(path, p);
+    }
     return imgCache.get(path);
   };
   window.HB_LOCK = function () { forget(); location.reload(); };
@@ -37,7 +45,7 @@
     const data = JSON.parse(new TextDecoder().decode(await open("secure/data.enc")));
     window.CUTOFFS = data.cutoffs; window.PANORAMA = data.panorama;
     document.body.classList.remove("locked");
-    const s = document.createElement("script"); s.src = "assets/app.js"; document.body.appendChild(s);
+    const s = document.createElement("script"); s.src = "assets/app.js" + ver(); document.body.appendChild(s);
   }
 
   function showLock(msg) {

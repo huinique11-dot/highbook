@@ -11,7 +11,7 @@ HB_KEY가 없으면 키를 직접 물어봅니다. 키를 바꾸려면 decrypt �
 형식: PBKDF2-HMAC-SHA256(키, salt, 반복 횟수) -> AES-256-GCM 키.
 각 파일 = 12바이트 IV + 암호문(GCM 태그 포함).
 """
-import getpass, io, json, os, pathlib, sys, tarfile
+import getpass, io, json, os, pathlib, sys, tarfile, time
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
@@ -43,14 +43,25 @@ def unseal(key, blob):
 
 def encrypt():
     k = passphrase()
-    salt = os.urandom(16)
-    key = derive(k, salt, ITER)
+    # 같은 키로 다시 암호화할 때는 salt를 그대로 써서 풀이 키가 바뀌지 않게 함
+    # (salt가 바뀌면 브라우저·캐시에 남은 예전 파일과 새 파일이 섞일 때 풀리지 않음)
+    salt, it = os.urandom(16), ITER
+    old_meta = SEC / "meta.json"
+    if old_meta.exists() and (SEC / "data.enc").exists():
+        m = json.loads(old_meta.read_text())
+        try:
+            unseal(derive(k, bytes.fromhex(m["salt"]), m["iter"]), (SEC / "data.enc").read_bytes())
+            salt, it = bytes.fromhex(m["salt"]), m["iter"]
+        except Exception:
+            print("키가 바뀌어 새 salt로 암호화합니다.")
+    key = derive(k, salt, it)
     if SEC.exists():
         for f in SEC.rglob("*"):
             if f.is_file():
                 f.unlink()
     (SEC / "img").mkdir(parents=True, exist_ok=True)
-    (SEC / "meta.json").write_text(json.dumps({"v": 1, "kdf": "PBKDF2-SHA256", "iter": ITER, "salt": salt.hex()}))
+    build = time.strftime("%Y%m%d%H%M%S")
+    (SEC / "meta.json").write_text(json.dumps({"v": 1, "kdf": "PBKDF2-SHA256", "iter": it, "salt": salt.hex(), "build": build}))
     bundle = {
         "cutoffs": json.loads((PRIV / "cutoffs.json").read_text()),
         "panorama": json.loads((PRIV / "panorama.json").read_text()),

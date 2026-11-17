@@ -263,7 +263,17 @@
         <details><summary>선발 방법·위치·전화도 비교하기</summary><div class="notes">${here.map(s => `<b>${esc(s.name)}</b>\n${esc(s.selection)}\n위치: ${esc(s.loc)} · ☎ ${esc(s.tel)}`).join("\n\n")}</div></details>
         <p class="hint">"-"는 원문에 숫자가 없거나 통합 모집이라 학과별 숫자가 없는 경우예요.</p></div>` : ""}
       <details class="panel"><summary>이 쪽의 글자만 보기</summary><div class="box" style="margin-top:8px">${esc(p.text)}</div></details>`;
-    if (window.HB_IMG) window.HB_IMG(n, bk.key).then(url => { const i = $("#pgImg"), a = $("#pgLink"); if (i) { i.src = url; i.style.minHeight = ""; } if (a) a.href = url; }).catch(() => { const i = $("#pgImg"); if (i) i.alt = "이미지를 불러오지 못했어요"; });
+    const loadImg = () => window.HB_IMG && window.HB_IMG(n, bk.key)
+      .then(url => { const i = $("#pgImg"), a = $("#pgLink"), e = $("#pgErr"); if (i) { i.src = url; i.style.minHeight = ""; i.hidden = false; } if (a) a.href = url; if (e) e.remove(); })
+      .catch(err => {
+        const a = $("#pgLink"); if (!a || $("#pgErr")) return;
+        const i = $("#pgImg"); if (i) i.hidden = true;
+        const box = document.createElement("div"); box.id = "pgErr"; box.className = "empty";
+        box.innerHTML = `이 쪽의 원문 이미지를 불러오지 못했어요.<br><span class="meta">${esc(err && err.name === "OperationError" ? "자료가 새로 바뀌었을 수 있어요. 앱을 완전히 닫았다가 다시 열어 주세요." : (err && err.message) || "인터넷 연결을 확인해 주세요.")}</span><br><button class="btn" type="button" style="margin-top:10px">다시 불러오기</button>`;
+        box.querySelector("button").addEventListener("click", () => { box.remove(); loadImg(); });
+        a.after(box);
+      });
+    loadImg();
   }
 
   // ---------- 일정·출결 ----------
