@@ -61,13 +61,15 @@
   const quota = d => d.total ? `${d.cls}학급 · ${d.total}명 (특별 ${d.sp ?? "-"} / 일반 ${d.gen ?? "-"})` : "통합 모집";
 
   // ---------- 라우팅 ----------
-  const routes = { schools: renderSchools, find: renderFind, book: renderBook, schedule: renderSchedule, marks: renderMarks };
+  const routes = { schools: renderSchools, find: renderFind, book: () => renderBook("pano"), dvbook: () => renderBook("dv"), schedule: renderSchedule, marks: renderMarks };
   function route() {
     const q = $("#q").value.trim();
     if (q) { renderSearch(q); setTab(null); return; }
     const h = decodeURIComponent(location.hash.slice(1)) || "schools";
     if (h.startsWith("school-")) { renderSchool(h.slice(7)); setTab("schools"); }
-    else if (h.startsWith("page-")) { renderPage(parseInt(h.slice(5), 10)); setTab("book"); }
+    else if (h.startsWith("page-")) { renderPage(parseInt(h.slice(5), 10), "pano"); setTab("book"); }
+    else if (h.startsWith("dv-")) { renderPage(parseInt(h.slice(3), 10), "dv"); setTab("book"); }
+    else if (h === "dvbook") { renderBook("dv"); setTab("book"); }
     else { (routes[h] || renderSchools)(); setTab(routes[h] ? h : "schools"); }
   }
   function setTab(t) { $$(".tab").forEach(a => a.dataset.tab === t ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")); }
@@ -128,9 +130,14 @@
       <div class="panel"><div class="card-top"><div class="card-main">
         <div class="badges"><span class="b b-kind">${esc(s.kind)}</span>${genderBadge(s.gender)}<span class="b b-kind">${esc(s.field)}</span></div>
         <h2 style="margin:2px 0 4px">${esc(displaySchool(s))}</h2>
-        <dl class="kv"><dt>위치</dt><dd>인천 ${esc(s.loc)}</dd><dt>전화</dt><dd>032-${esc(s.tel)}</dd><dt>원문</dt><dd><a href="#page-${s.page}">파노라마 ${s.page}쪽 보기</a></dd></dl>
+        <dl class="kv"><dt>위치</dt><dd>인천 ${esc(s.loc)}</dd><dt>전화</dt><dd>032-${esc(s.tel)}</dd><dt>원문</dt><dd><a href="#page-${s.page}">파노라마 ${s.page}쪽</a>${s.dv ? ` · <a href="#dv-${s.dv}">Dream &amp; Vision ${s.dv}쪽</a>` : ""}</dd></dl>
       </div>${starBtn(item)}</div></div>
       <div class="panel"><h3>2027학년도 특별전형 선발 방법</h3><div class="box">${esc(s.selection)}</div></div>
+      <div class="panel"><h3>학과 지망 방식${s.choice ? ` <span class="pill p-reach" style="font-size:.74rem">${esc(s.choice.type)}</span>` : ""}</h3>
+        ${s.choice ? `<p style="margin:0;font-size:.92rem">${esc(s.choice.text)}</p><p class="hint">근거: ${esc(s.choice.src)}</p>`
+          : `<p style="margin:0;font-size:.92rem">이 학교의 학과 지망 방식(몇 지망까지 쓰는지, 떨어지면 다른 학과로 배정되는지)은 가진 자료에서 확인되지 않았어요.</p>`}
+        <p class="hint">학교마다 1지망만 쓰는 곳, 모든 학과를 순서대로 다 적어야 하는 곳, 통합 모집하는 곳이 있어요. 원서 쓰기 전에 2027학년도 학교 입학전형 요강으로 꼭 확인하세요.</p></div>
+      ${s.features && s.features.length ? `<div class="panel"><h3>특색 있는 교육활동</h3><ul style="margin:0;padding-left:1.2em;font-size:.9rem">${s.features.map(f => `<li>${esc(f)}</li>`).join("")}</ul><p class="hint">출처: Dream &amp; Vision 2027 ${s.dv}쪽 (학교 제공 내용)</p></div>` : ""}
       <h2>개설 학과 (${s.depts.length})</h2>
       <div class="list">${s.depts.map((d, i) => {
         const it = { id: `dept:${s.id}:${i}`, type: "학과", title: `${displaySchool(s).replace(/\s*\(현.*\)/, "")} ${d.name}`, sub: quota(d), href: "#school-" + s.id };
@@ -217,25 +224,38 @@
     out.innerHTML = html;
   }
 
-  // ---------- 파노라마 전체보기 ----------
-  function renderBook() {
-    view.innerHTML = `<div class="panel"><h2 style="margin-top:0">2027 고입 파노라마 (20쪽)</h2>
-      <p class="sub" style="margin-top:0">인천광역시교육청 진로진학지원단 마중물에서 만든 2027학년도 고입·대입 안내 자료예요. 쪽을 누르면 원문 그대로 볼 수 있어요.</p>
-      <nav class="toc">${PANO.pages.map(p => `<a href="#page-${p.page}"><b>${p.page}</b><span>${esc(p.title)}</span>${isMarked("page:" + p.page) ? `<span style="margin-left:auto;color:#e0a800">★</span>` : ""}</a>`).join("")}</nav></div>`;
+  // ---------- 자료 전체보기 (파노라마 / Dream & Vision) ----------
+  const DV = PANO.dv || { pages: [] };
+  const BOOKS = {
+    pano: { key: "pano", name: "2027 고입 파노라마", short: "파노라마", pages: PANO.pages, prefix: "page-", toc: "book", mark: "page:",
+      about: "인천광역시교육청 진로진학지원단 마중물에서 만든 2027학년도 고입·대입 안내 자료예요." },
+    dv: { key: "dv", name: "2027 Dream & Vision 인천 특성화고·마이스터고 안내", short: "Dream & Vision", pages: DV.pages, prefix: "dv-", toc: "dvbook", mark: "dv:",
+      about: "인천광역시교육청 진로진학직업교육과에서 만든 특성화고·마이스터고 안내 책자예요. 졸업생 진로, 공무원·대학 진학 제도, 학교별 소개가 있어요. 개인정보 보호를 위해 사진은 회색으로 가렸고, 만든 사람 명단(76쪽)은 넣지 않았어요." },
+  };
+  function bookSwitch(cur) {
+    return `<div class="chips" style="margin-bottom:12px">${Object.values(BOOKS).map(bk => `<a class="chip" href="#${bk.toc}" aria-pressed="${bk.key === cur}" style="text-decoration:none">${esc(bk.short)} (${bk.pages.length}쪽)</a>`).join("")}</div>`;
   }
-  function renderPage(n) {
-    const p = PANO.pages.find(x => x.page === n);
-    if (!p) { renderBook(); return; }
-    const item = { id: "page:" + n, type: "파노라마", title: `${n}쪽 · ${p.title}`, sub: "2027 고입 파노라마", href: "#page-" + n };
-    const here = PANO.schools.filter(s => s.page === n);
+  function renderBook(key) {
+    const bk = BOOKS[key] || BOOKS.pano;
+    view.innerHTML = bookSwitch(bk.key) + `<div class="panel"><h2 style="margin-top:0">${esc(bk.name)}</h2>
+      <p class="sub" style="margin-top:0">${esc(bk.about)} 쪽을 누르면 원문 그대로 볼 수 있어요.</p>
+      <nav class="toc">${bk.pages.map(p => `<a href="#${bk.prefix}${p.page}"><b>${p.page}</b><span>${esc(p.title)}</span>${isMarked(bk.mark + p.page) ? `<span style="margin-left:auto;color:#e0a800">★</span>` : ""}</a>`).join("")}</nav></div>`;
+  }
+  function renderPage(n, key) {
+    const bk = BOOKS[key] || BOOKS.pano;
+    const idx = bk.pages.findIndex(x => x.page === n), p = bk.pages[idx];
+    if (!p) { renderBook(bk.key); return; }
+    const prev = bk.pages[idx - 1], next = bk.pages[idx + 1];
+    const item = { id: bk.mark + n, type: bk.short, title: `${n}쪽 · ${p.title}`, sub: bk.name, href: "#" + bk.prefix + n };
+    const here = bk.key === "pano" ? PANO.schools.filter(s => s.page === n) : PANO.schools.filter(s => s.dv === n);
     view.innerHTML = `
-      <div class="pager"><a class="btn ghost" href="#book">목차</a>
-        <div class="row" style="gap:6px">${n > 1 ? `<a class="btn ghost" href="#page-${n - 1}" aria-label="이전 쪽">‹ ${n - 1}</a>` : ""}${n < PANO.pages.length ? `<a class="btn ghost" href="#page-${n + 1}" aria-label="다음 쪽">${n + 1} ›</a>` : ""}</div></div>
-      <div class="panel"><div class="card-top"><div class="card-main"><div class="meta">${n}쪽</div><h2 style="margin:2px 0 0">${esc(p.title)}</h2></div>${starBtn(item)}</div>
-        ${here.length ? `<div class="chips" style="margin-top:10px">${here.map(s => `<a class="chip" href="#school-${esc(s.id)}">${esc(s.short)}</a>`).join("")}</div><p class="hint">학교 이름을 누르면 학과 정보를 글로 크게 볼 수 있어요.</p>` : ""}</div>
-      <a id="pgLink" target="_blank" rel="noopener" title="새 창에서 크게 보기"><img class="pageimg" id="pgImg" alt="2027 고입 파노라마 ${n}쪽 ${esc(p.title)}" style="min-height:300px"></a>
-      <p class="hint">이미지를 누르면 새 창에서 크게 볼 수 있어요. 휴대폰에서는 두 손가락으로 확대하세요.</p>
-      ${here.length ? `<div class="panel"><h3>옮겨 적은 내용 확인표</h3>
+      <div class="pager"><a class="btn ghost" href="#${bk.toc}">목차</a>
+        <div class="row" style="gap:6px">${prev ? `<a class="btn ghost" href="#${bk.prefix}${prev.page}" aria-label="이전 쪽">‹ ${prev.page}</a>` : ""}${next ? `<a class="btn ghost" href="#${bk.prefix}${next.page}" aria-label="다음 쪽">${next.page} ›</a>` : ""}</div></div>
+      <div class="panel"><div class="card-top"><div class="card-main"><div class="meta">${esc(bk.short)} ${n}쪽</div><h2 style="margin:2px 0 0">${esc(p.title)}</h2></div>${starBtn(item)}</div>
+        ${here.length ? `<div class="chips" style="margin-top:10px">${here.map(s => `<a class="chip" href="#school-${esc(s.id)}">${esc(s.short)} 정보 보기</a>`).join("")}</div>` : ""}</div>
+      <a id="pgLink" target="_blank" rel="noopener" title="새 창에서 크게 보기"><img class="pageimg" id="pgImg" alt="${esc(bk.name)} ${n}쪽 ${esc(p.title)}" style="min-height:300px"></a>
+      <p class="hint">이미지를 누르면 새 창에서 크게 볼 수 있어요. 휴대폰에서는 두 손가락으로 확대하세요.${bk.key === "dv" ? " 회색 상자는 개인정보 보호를 위해 가린 사진이에요." : ""}</p>
+      ${bk.key === "pano" && here.length ? `<div class="panel"><h3>옮겨 적은 내용 확인표</h3>
         <p class="sub" style="margin-top:0">이 쪽은 그림으로 되어 있어 사람이 읽고 옮겨 적었어요. 위 원문과 한 줄씩 비교해 보고, 다른 곳이 있으면 알려 주세요.</p>
         <div class="tbl-wrap"><table><thead><tr><th>연번</th><th>학교</th><th>학과</th><th class="n">학급</th><th class="n">전체</th><th class="n">특별</th><th class="n">일반</th></tr></thead><tbody>
         ${here.map(s => s.depts.map((d, i) => `<tr><td>${i ? "" : esc(s.no)}</td><td>${i ? "" : `<a href="#school-${esc(s.id)}">${esc(s.name)}</a>`}</td><td>${esc(d.name)}</td><td class="n">${d.cls ?? "-"}</td><td class="n">${d.total ?? "-"}</td><td class="n">${d.sp ?? "-"}</td><td class="n">${d.gen ?? "-"}</td></tr>`).join("")).join("")}
@@ -243,7 +263,7 @@
         <details><summary>선발 방법·위치·전화도 비교하기</summary><div class="notes">${here.map(s => `<b>${esc(s.name)}</b>\n${esc(s.selection)}\n위치: ${esc(s.loc)} · ☎ ${esc(s.tel)}`).join("\n\n")}</div></details>
         <p class="hint">"-"는 원문에 숫자가 없거나 통합 모집이라 학과별 숫자가 없는 경우예요.</p></div>` : ""}
       <details class="panel"><summary>이 쪽의 글자만 보기</summary><div class="box" style="margin-top:8px">${esc(p.text)}</div></details>`;
-    if (window.HB_IMG) window.HB_IMG(n).then(url => { const i = $("#pgImg"), a = $("#pgLink"); if (i) { i.src = url; i.style.minHeight = ""; } if (a) a.href = url; }).catch(() => { const i = $("#pgImg"); if (i) i.alt = "이미지를 불러오지 못했어요"; });
+    if (window.HB_IMG) window.HB_IMG(n, bk.key).then(url => { const i = $("#pgImg"), a = $("#pgLink"); if (i) { i.src = url; i.style.minHeight = ""; } if (a) a.href = url; }).catch(() => { const i = $("#pgImg"); if (i) i.alt = "이미지를 불러오지 못했어요"; });
   }
 
   // ---------- 일정·출결 ----------
@@ -301,7 +321,7 @@
           <li><span class="when">1.11 원서</span><span><b>추가모집</b>: 전·후기 어디에도 합격하지 못한 학생만 1개 학교 지원</span></li>
         </ol>
         <ul style="margin:10px 0 0;padding-left:1.2em;font-size:.88rem;color:var(--sub)">
-          <li>한 학교 안에서 2지망 학과를 쓸 수 있는지, 통합 모집인지는 학교마다 달라요. 학교별 입학전형 요강을 확인하세요.</li>
+          <li><b>학과 지망은 학교마다 달라요.</b> 인천디자인고처럼 모든 학과를 1지망부터 끝까지 다 적어야 하는 학교(1지망에서 떨어지면 성적순으로 자리가 남은 학과에 배정), 재능고·영종국제물류고처럼 학과 없이 통합 모집하는 학교, 군특성화·일반 학급을 나눠 뽑는 학교가 있어요. 학교 화면의 "학과 지망 방식"을 보고, 2027학년도 요강으로 꼭 확인하세요.</li>
           <li>외고·국제고·자사고에 지원했다가 불합격하면 일반고 2지망부터 배정되어 예술·IB중점과정(0지망)에는 지원할 수 없어요.</li>
           <li>예술·IB중점과정은 희망자가 많으면 일반고 배정 방식으로 정해져 배정이 보장되지 않아요.</li>
         </ul>
@@ -395,10 +415,11 @@
     }).filter(Boolean);
     const cuts = CUT.filter(r => has([r.school, r.dept, r.type, ...YEARS.map(y => r.years[y].note)].join(" ")));
     const pages = PANO.pages.filter(p => !(p.page >= 7 && p.page <= 12) && has(p.title + " " + p.text));
+    const dvPages = DV.pages.filter(p => has(p.title + " " + p.text));
     const item = { id: "search:" + q, type: "검색어", title: q, sub: "검색 결과 다시 보기", href: "#q=" + encodeURIComponent(q) };
-    const total = sch.length + cuts.length + pages.length;
+    const total = sch.length + cuts.length + pages.length + dvPages.length;
     view.innerHTML = `<div class="panel"><div class="card-top"><div class="card-main"><h2 style="margin:0">"${esc(q)}" 검색 결과 ${total}건</h2>
-      <div class="meta">학교·학과 ${sch.length} · 커트라인 ${cuts.length} · 파노라마 ${pages.length}쪽</div></div>${starBtn(item)}</div>
+      <div class="meta">학교·학과 ${sch.length} · 커트라인 ${cuts.length} · 파노라마 ${pages.length}쪽 · Dream &amp; Vision ${dvPages.length}쪽</div></div>${starBtn(item)}</div>
       <p class="hint">띄어쓰기로 여러 단어를 넣으면 모두 포함한 결과만 보여요. 원하는 결과가 없으면 비슷한 다른 단어로 찾아보세요.</p></div>
       ${sch.length ? `<h3 class="group-h">학교·학과</h3><div class="list">${sch.map(({ s, ds, sel }) => `<a class="card" href="#school-${esc(s.id)}">
         <div class="badges"><span class="b b-kind">${esc(s.kind)}</span>${genderBadge(s.gender)}</div>
@@ -406,6 +427,9 @@
         ${ds.length ? `<div class="snip">${ds.map(d => `<b>${hl(d.name, toks)}</b> — ${hl(snippets(deptText(d), toks, 1)[0] || d.intro, toks)}`).join("<br>")}</div>` : ""}
         ${sel ? `<div class="snip"><b>선발 방법</b> — ${hl(snippets(s.selection, toks, 1)[0] || "", toks)}</div>` : ""}</a>`).join("")}</div>` : ""}
       ${pages.length ? `<h3 class="group-h">2027 고입 파노라마</h3><div class="list">${pages.map(p => `<a class="card" href="#page-${p.page}">
+        <div class="meta">${p.page}쪽</div><div class="title" style="font-size:.98rem">${hl(p.title, toks)}</div>
+        ${snippets(p.text, toks, 2).map(sn => `<div class="snip">${hl(sn, toks)}</div>`).join("")}</a>`).join("")}</div>` : ""}
+      ${dvPages.length ? `<h3 class="group-h">Dream &amp; Vision 2027</h3><div class="list">${dvPages.map(p => `<a class="card" href="#dv-${p.page}">
         <div class="meta">${p.page}쪽</div><div class="title" style="font-size:.98rem">${hl(p.title, toks)}</div>
         ${snippets(p.text, toks, 2).map(sn => `<div class="snip">${hl(sn, toks)}</div>`).join("")}</a>`).join("")}</div>` : ""}
       ${cuts.length ? `<h3 class="group-h">커트라인·합격 사례</h3><div class="list">${cuts.slice(0, 60).map(r => { const s = schoolForCut(r); return `<div class="card">

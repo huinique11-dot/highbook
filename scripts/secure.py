@@ -56,11 +56,14 @@ def encrypt():
         "panorama": json.loads((PRIV / "panorama.json").read_text()),
     }
     (SEC / "data.enc").write_bytes(seal(key, json.dumps(bundle, ensure_ascii=False).encode()))
-    for img in sorted((PRIV / "img").glob("p-*.jpg")):
-        (SEC / "img" / (img.stem + ".enc")).write_bytes(seal(key, img.read_bytes()))
+    for folder, out in (("img", "img"), ("dv/img", "dv")):
+        (SEC / out).mkdir(parents=True, exist_ok=True)
+        for img in sorted((PRIV / folder).glob("*.jpg")):
+            (SEC / out / (img.stem + ".enc")).write_bytes(seal(key, img.read_bytes()))
+    # 원본 백업: 이미지는 위의 암호화 파일로 복구하므로 제외해 용량을 줄임
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
-        tar.add(PRIV, arcname="private")
+        tar.add(PRIV, arcname="private", filter=lambda t: None if t.name.endswith(".jpg") else t)
     (SEC / "source.enc").write_bytes(seal(key, buf.getvalue()))
     print("암호화 완료 ->", SEC)
 
@@ -75,6 +78,10 @@ def decrypt():
         sys.exit("키가 맞지 않습니다.")
     with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as tar:
         tar.extractall(ROOT, filter="data")
+    for folder, src in (("img", "img"), ("dv/img", "dv")):
+        (PRIV / folder).mkdir(parents=True, exist_ok=True)
+        for f in sorted((SEC / src).glob("*.enc")):
+            (PRIV / folder / (f.stem + ".jpg")).write_bytes(unseal(key, f.read_bytes()))
     print("원본 복구 완료 ->", PRIV)
 
 

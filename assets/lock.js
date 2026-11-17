@@ -26,9 +26,10 @@
   }
 
   // 원문 이미지: 필요할 때 풀어서 이 기기 메모리에서만 보여 줌
-  window.HB_IMG = function (n) {
-    if (!imgCache.has(n)) imgCache.set(n, open(`secure/img/p-${String(n).padStart(2, "0")}.enc`).then(b => URL.createObjectURL(new Blob([b], { type: "image/jpeg" }))));
-    return imgCache.get(n);
+  window.HB_IMG = function (n, book) {
+    const nn = String(n).padStart(2, "0"), path = book === "dv" ? `secure/dv/d-${nn}.enc` : `secure/img/p-${nn}.enc`;
+    if (!imgCache.has(path)) imgCache.set(path, open(path).then(b => URL.createObjectURL(new Blob([b], { type: "image/jpeg" }))));
+    return imgCache.get(path);
   };
   window.HB_LOCK = function () { forget(); location.reload(); };
 
