@@ -3,7 +3,11 @@
   "use strict";
   const CUT = (window.CUTOFFS && window.CUTOFFS.rows) || [];
   const PANO = window.PANORAMA || { pages: [], schools: [], categories: [] };
-  const YEARS = ["2025", "2024", "2023", "2022"];
+  // 학년도 목록은 자료에서 읽음 (최신부터). 올해(current)는 입시 결과가 들어오는 중이라 일부만 있음
+  const YEARS = (window.CUTOFFS && window.CUTOFFS.years) || ["2026", "2025", "2024", "2023"];
+  const CURRENT = window.CUTOFFS && window.CUTOFFS.current;
+  const DONE = YEARS.filter(y => y !== CURRENT);   // 결과가 다 나온 학년도
+  const yl = y => `${y}학년도${y === CURRENT ? "(진행 중)" : ""}`;
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -53,7 +57,7 @@
       const d = row.years[y]; if (!d) return "";
       const extra = [d.specialRaw && `특별 원문: ${d.specialRaw}`, d.generalRaw && `일반 원문: ${d.generalRaw}`].filter(Boolean);
       if (!d.note && !extra.length) return "";
-      return `<b>${y}</b> ${esc([d.note, ...extra].filter(Boolean).join("\n"))}`;
+      return `<b>${y}학년도</b> ${esc([d.note, ...extra].filter(Boolean).join("\n"))}`;
     }).filter(Boolean);
     return parts.length ? `<details><summary>합격·불합격 사례 보기</summary><div class="notes">${parts.join("\n\n")}</div></details>` : "";
   }
@@ -147,9 +151,9 @@
           <dl class="kv"><dt>자격증</dt><dd>${esc(d.cert)}</dd><dt>취업</dt><dd>${esc(d.job)}</dd>${d.univ ? `<dt>진학</dt><dd>${esc(d.univ)}</dd>` : ""}</dl></div>`;
       }).join("")}</div>
       <h2>지난 커트라인 (석차백분율, %)</h2>
-      ${cuts.length ? `<div class="panel"><div class="tbl-wrap"><table><thead><tr><th>학과</th>${YEARS.map(y => `<th class="n">${y} 특</th><th class="n">${y} 일</th>`).join("")}</tr></thead><tbody>
+      ${cuts.length ? `<div class="panel"><div class="tbl-wrap"><table><thead><tr><th>학과</th>${YEARS.map(y => `<th class="n">${y}<br>특별</th><th class="n">${y}<br>일반</th>`).join("")}</tr></thead><tbody>
         ${cuts.map(r => `<tr><td><span class="b t-${esc(r.type)}">${esc(r.type)}</span> ${esc(r.dept)}${notesHtml(r)}</td>${YEARS.map(y => `<td class="n">${cutText(r.years[y], "special")}</td><td class="n">${cutText(r.years[y], "general")}</td>`).join("")}</tr>`).join("")}
-      </tbody></table></div><p class="hint">특=특별전형, 일=일반전형. 숫자가 작을수록 상위권이며, 커트라인은 그 해 합격한 가장 낮은 성적입니다. "미달"은 지원자 전원 합격.</p></div>`
+      </tbody></table></div><p class="hint">연도는 학년도(입학하는 해) 기준이에요. ${CURRENT ? CURRENT + "학년도는 올해 입시 결과가 들어오는 중이라 일부 학과만 있어요. " : ""}숫자가 작을수록 상위권이며, 커트라인은 그 해 합격한 가장 낮은 성적입니다. "미달"은 지원자 전원 합격.</p></div>`
         : `<div class="empty">이 학교의 커트라인 자료가 없어요.</div>`}`;
   }
 
@@ -160,15 +164,16 @@
     { key: "reach", name: "소신권", cls: "p-reach", desc: "0~3%p 여유", test: m => m >= 0 && m < 3, col: "var(--reach)" },
     { key: "try", name: "도전권", cls: "p-try", desc: "커트라인보다 0~5%p 부족", test: m => m < 0 && m >= -5, col: "var(--try)" },
   ];
-  let findState = store.get("hb.find", { score: "", gender: "남", adm: "special", basis: "2025", q: "", showTry: false });
+  let findState = store.get("hb.find", { score: "", gender: "남", adm: "special", basis: DONE[0], q: "", showTry: false });
+  if (![...YEARS, "avg2", "avg4"].includes(findState.basis)) findState.basis = DONE[0];
   function cutValue(row, adm, basis) {
     if (basis === "avg2" || basis === "avg4") {
-      const vs = (basis === "avg2" ? YEARS.slice(0, 2) : YEARS).map(y => row.years[y] && row.years[y][adm]).filter(v => v != null);
+      const vs = (basis === "avg2" ? DONE.slice(0, 2) : DONE.slice(0, 4)).map(y => row.years[y] && row.years[y][adm]).filter(v => v != null);
       return vs.length ? Math.round(vs.reduce((a, b) => a + b, 0) / vs.length * 10) / 10 : null;
     }
     const y = row.years[basis]; return y ? y[adm] : null;
   }
-  const basisLabel = b => b === "avg2" ? "최근 2년 평균" : b === "avg4" ? "4년 평균" : b + " 커트라인";
+  const basisLabel = b => b === "avg2" ? `${DONE.slice(0, 2).join("·")}학년도 평균` : b === "avg4" ? `${DONE.slice(0, 4).at(-1)}~${DONE[0]}학년도 평균` : yl(b) + " 커트라인";
   function renderFind() {
     const f = findState;
     view.innerHTML = `
@@ -177,11 +182,11 @@
           <div class="field"><label for="fScore">내 석차백분율 (%)</label><input id="fScore" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="예: 62.5" value="${esc(f.score)}"></div>
           <div class="field"><label>성별</label><div class="seg" id="fGender">${["남", "여"].map(v => `<button type="button" data-v="${v}" aria-pressed="${f.gender === v}">${v}</button>`).join("")}</div></div>
           <div class="field"><label>전형</label><div class="seg" id="fAdm"><button type="button" data-v="special" aria-pressed="${f.adm === "special"}">특별</button><button type="button" data-v="general" aria-pressed="${f.adm === "general"}">일반</button></div></div>
-          <div class="field"><label for="fBasis">기준</label><select id="fBasis">${[["2025", "2025 커트라인"], ["2024", "2024 커트라인"], ["2023", "2023 커트라인"], ["2022", "2022 커트라인"], ["avg2", "최근 2년 평균"], ["avg4", "4년 평균"]].map(([v, l]) => `<option value="${v}" ${f.basis === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+          <div class="field"><label for="fBasis">기준</label><select id="fBasis">${[...YEARS.map(y => [y, yl(y) + " 커트라인"]), ["avg2", basisLabel("avg2")], ["avg4", basisLabel("avg4")]].map(([v, l]) => `<option value="${v}" ${f.basis === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
         </div>
         <div class="row" style="margin-top:12px"><div class="grow"><input id="fQ" type="search" placeholder="학교·학과로 좁히기 (예: 조리)" value="${esc(f.q)}"></div>
           <label class="check"><input type="checkbox" id="fTry" ${f.showTry ? "checked" : ""}> 도전권도 보기</label></div>
-        <p class="hint">석차백분율은 <b>숫자가 작을수록 상위권</b>입니다. 내 %가 커트라인보다 작거나 같으면 지원 가능권이에요. 출결·학과체험·가산점에 따라 결과가 달라질 수 있어요.</p>
+        <p class="hint">석차백분율은 <b>숫자가 작을수록 상위권</b>입니다. 내 %가 커트라인보다 작거나 같으면 지원 가능권이에요. 출결·학과체험·가산점에 따라 결과가 달라질 수 있어요. 연도는 학년도(입학하는 해) 기준이고, ${CURRENT ? CURRENT + "학년도는 올해 결과가 들어오는 중이라 일부 학과만 있어요." : ""}</p>
       </div>
       <div id="fOut"></div>`;
     const upd = () => { store.set("hb.find", findState); drawFind(); };
@@ -217,7 +222,7 @@
           <div class="title">${s ? `<a href="#school-${esc(s.id)}" style="color:inherit">${esc(r.school.replace("(협약형)", ""))}</a>` : esc(r.school)}</div><div class="sub">${esc(r.dept)}</div></div>
           <div class="cut"><div class="v" style="color:${b.col}">${under ? "미달" : cut.toFixed(1) + "%"}</div><div class="u">${basisLabel(f.basis)}</div>
           <div class="m" style="color:${b.col}">${margin >= 0 ? "여유 " + margin.toFixed(1) : "부족 " + Math.abs(margin).toFixed(1)}%p</div></div>${starBtn(it)}</div>
-          <div class="trend">${YEARS.map(y => `<span>${y.slice(2)} 특 <b>${cutText(r.years[y], "special")}</b> · 일 <b>${cutText(r.years[y], "general")}</b></span>`).join("")}</div>
+          <div class="trend">${YEARS.map(y => `<span>${y.slice(2)}학년도 특 <b>${cutText(r.years[y], "special")}</b> · 일 <b>${cutText(r.years[y], "general")}</b></span>`).join("")}</div>
           ${notesHtml(r)}</article>`;
       }).join("") + `</div>`;
     }
@@ -444,8 +449,8 @@
         ${snippets(p.text, toks, 2).map(sn => `<div class="snip">${hl(sn, toks)}</div>`).join("")}</a>`).join("")}</div>` : ""}
       ${cuts.length ? `<h3 class="group-h">커트라인·합격 사례</h3><div class="list">${cuts.slice(0, 60).map(r => { const s = schoolForCut(r); return `<div class="card">
         <div class="title" style="font-size:.98rem">${s ? `<a href="#school-${esc(s.id)}" style="color:inherit">${hl(r.school.replace("(협약형)", "") + " " + r.dept, toks)}</a>` : hl(r.school + " " + r.dept, toks)}</div>
-        <div class="trend">${YEARS.map(y => `<span>${y.slice(2)} 특 <b>${cutText(r.years[y], "special")}</b> · 일 <b>${cutText(r.years[y], "general")}</b></span>`).join("")}</div>
-        ${YEARS.map(y => r.years[y].note && toks.some(k => r.years[y].note.toLowerCase().includes(k)) ? `<div class="snip"><b>${y}</b> ${hl(r.years[y].note.replace(/\n/g, " / "), toks)}</div>` : "").join("")}</div>`; }).join("")}</div>` : ""}
+        <div class="trend">${YEARS.map(y => `<span>${y.slice(2)}학년도 특 <b>${cutText(r.years[y], "special")}</b> · 일 <b>${cutText(r.years[y], "general")}</b></span>`).join("")}</div>
+        ${YEARS.map(y => r.years[y].note && toks.some(k => r.years[y].note.toLowerCase().includes(k)) ? `<div class="snip"><b>${y}학년도</b> ${hl(r.years[y].note.replace(/\n/g, " / "), toks)}</div>` : "").join("")}</div>`; }).join("")}</div>` : ""}
       ${total ? "" : `<div class="empty">"${esc(q)}"와 일치하는 내용이 없어요. 다른 단어로 찾아보거나 <a href="#book">파노라마 전체보기</a>에서 직접 찾아보세요.</div>`}`;
   }
   let qTimer;
